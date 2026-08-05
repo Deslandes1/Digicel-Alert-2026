@@ -1,4 +1,7 @@
 import streamlit as st
+from gtts import gTTS
+from io import BytesIO
+import base64
 
 # ---------- DEBUG ----------
 print("✅ app.py is starting...")
@@ -25,8 +28,8 @@ st.markdown("""
     /* SIDEBAR BACKGROUND - MATCHES MAIN PAGE */
     .stSidebar,
     .stSidebar .sidebar-content,
-    .css-1d391kg,           /* Streamlit sidebar container */
-    .css-1lcbmhc,           /* Another sidebar class */
+    .css-1d391kg,
+    .css-1lcbmhc,
     section[data-testid="stSidebar"] {
         background: #0a0a0a !important;
     }
@@ -135,7 +138,6 @@ st.markdown("""
         font-weight: 600;
         margin-top: 10px;
     }
-    /* Make radio buttons and labels white */
     .stRadio label {
         color: #ffffff !important;
     }
@@ -178,71 +180,23 @@ with st.sidebar:
     
     st.markdown(f'<div class="voice-text">{voice_text}</div>', unsafe_allow_html=True)
     
-    # ---------- FIXED: Female AI Voice Alert ----------
+    # ---------- Voice Alert using gTTS (female voice) ----------
     if st.button("🔊 Play Voice Alert (Female)", use_container_width=True):
-        # Escape special characters for JavaScript
-        escaped_text = voice_text.replace("`", "\\`").replace("'", "\\'")
-        
-        # JavaScript using dynamic language code
-        js_code = f"""
-        <script>
-        (function() {{
-            console.log("🔊 Voice alert triggered.");
-            const utterance = new SpeechSynthesisUtterance(`{escaped_text}`);
-            utterance.lang = '{lang_code}';
-            utterance.rate = 0.9;
-            utterance.pitch = 1.1;
-            
-            function findFemaleVoice() {{
-                const voices = speechSynthesis.getVoices();
-                console.log("Available voices:", voices.length);
-                // First try to find a female voice for the selected language
-                for (let voice of voices) {{
-                    if (voice.lang.startsWith('{lang_code}') && 
-                        voice.name.toLowerCase().includes('female')) {{
-                        return voice;
-                    }}
-                }}
-                // Fallback: find any voice matching the language
-                for (let voice of voices) {{
-                    if (voice.lang.startsWith('{lang_code}')) {{
-                        return voice;
-                    }}
-                }}
-                // Last resort: use the first available voice
-                return voices.length > 0 ? voices[0] : null;
-            }}
-            
-            function speak() {{
-                const voice = findFemaleVoice();
-                if (voice) {{
-                    utterance.voice = voice;
-                    console.log("Using voice:", voice.name);
-                }}
-                speechSynthesis.speak(utterance);
-            }}
-            
-            // Wait for voices to load if needed
-            if (speechSynthesis.getVoices().length > 0) {{
-                speak();
-            }} else {{
-                speechSynthesis.onvoiceschanged = function() {{
-                    speak();
-                    speechSynthesis.onvoiceschanged = null;
-                }};
-            }}
-        }})();
-        </script>
-        """
-        
-        # Use st.components.v1.html with a small height to avoid AttributeError
-        try:
-            st.components.v1.html(js_code, height=0)
-            st.success("🔊 Female voice is playing via your browser!")
-            st.info("💡 If you don't hear anything, check your browser's volume and permissions.")
-        except Exception as e:
-            st.error(f"Voice error: {e}")
-            st.info("💡 Please try refreshing the page or using a different browser.")
+        with st.spinner("🔊 Generating voice with gTTS..."):
+            try:
+                # Generate speech using gTTS
+                tts = gTTS(text=voice_text, lang=lang_code, slow=False)
+                audio_bytes = BytesIO()
+                tts.write_to_fp(audio_bytes)
+                audio_bytes.seek(0)
+                
+                # Display audio player
+                st.audio(audio_bytes, format='audio/mp3')
+                st.success("✅ Female voice played using gTTS!")
+                st.info("💡 gTTS uses a natural female voice.")
+            except Exception as e:
+                st.error(f"❌ gTTS error: {e}")
+                st.info("💡 Please check your internet connection.")
     
     st.markdown("---")
     
@@ -275,7 +229,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ---------- City List (EXACT 55 cities as per request) ----------
+# ---------- City List (EXACT 55 cities) ----------
 st.markdown('<h2 class="city-heading">📍 Affected Cities in Southern Haiti</h2>', unsafe_allow_html=True)
 
 southern_cities = [
@@ -293,7 +247,6 @@ southern_cities = [
     "Thomazeau (South)"
 ]
 
-# Display in 3 columns with white text
 cols = st.columns(3)
 for idx, city in enumerate(southern_cities):
     with cols[idx % 3]:
@@ -315,6 +268,5 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ---------- Final Debug ----------
 print("✅ app.py loaded completely and rendered successfully.")
 st.success("✅ App ready!")
