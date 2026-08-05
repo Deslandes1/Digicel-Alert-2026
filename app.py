@@ -23,16 +23,22 @@ st.markdown("""
     }
 
     /* SIDEBAR BACKGROUND - MATCHES MAIN PAGE */
-    .stSidebar {
+    .stSidebar,
+    .stSidebar .sidebar-content,
+    .css-1d391kg,           /* Streamlit sidebar container */
+    .css-1lcbmhc,           /* Another sidebar class */
+    section[data-testid="stSidebar"] {
         background: #0a0a0a !important;
     }
-    .stSidebar .sidebar-content {
-        background: #0a0a0a !important;
-    }
-    .stSidebar .stRadio label {
-        color: #ffffff !important;
-    }
-    .stSidebar .stRadio div {
+
+    /* Make all sidebar text white */
+    .stSidebar .stRadio label,
+    .stSidebar .stRadio div,
+    .stSidebar .stMarkdown,
+    .stSidebar .stCaption,
+    .stSidebar .stButton button,
+    .stSidebar .stSelectbox label,
+    .stSidebar .stTextInput label {
         color: #ffffff !important;
     }
 
@@ -177,7 +183,7 @@ with st.sidebar:
         # Escape special characters for JavaScript
         escaped_text = voice_text.replace("`", "\\`").replace("'", "\\'")
         
-        # Create a more robust JavaScript that uses the global speechSynthesis API
+        # JavaScript using dynamic language code
         js_code = f"""
         <script>
         (function() {{
@@ -190,7 +196,7 @@ with st.sidebar:
             function findFemaleVoice() {{
                 const voices = speechSynthesis.getVoices();
                 console.log("Available voices:", voices.length);
-                // First try to find a female voice
+                // First try to find a female voice for the selected language
                 for (let voice of voices) {{
                     if (voice.lang.startsWith('{lang_code}') && 
                         voice.name.toLowerCase().includes('female')) {{
@@ -229,15 +235,14 @@ with st.sidebar:
         </script>
         """
         
-        # Use st.html instead of st.components to avoid the AttributeError
+        # Use st.components.v1.html with a small height to avoid AttributeError
         try:
-            st.components.v1.html(js_code, height=50)
+            st.components.v1.html(js_code, height=0)
             st.success("🔊 Female voice is playing via your browser!")
             st.info("💡 If you don't hear anything, check your browser's volume and permissions.")
-        except AttributeError:
-            # Fallback: use st.markdown with iframe
-            st.markdown(f'<iframe srcdoc="{js_code}" style="width:100%;height:50px;border:none;"></iframe>', unsafe_allow_html=True)
-            st.success("🔊 Voice alert triggered!")
+        except Exception as e:
+            st.error(f"Voice error: {e}")
+            st.info("💡 Please try refreshing the page or using a different browser.")
     
     st.markdown("---")
     
