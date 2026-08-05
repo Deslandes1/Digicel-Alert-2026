@@ -1,7 +1,8 @@
 import streamlit as st
 from io import BytesIO
+import base64
 
-# Try importing gTTS; if not available, use fallback
+# Try importing gTTS
 try:
     from gtts import gTTS
     GTTS_AVAILABLE = True
@@ -27,12 +28,9 @@ print("✅ Page config set.")
 # ---------- Custom CSS ----------
 st.markdown("""
     <style>
-    /* MAIN PAGE BACKGROUND */
     .stApp {
         background: #0a0a0a !important;
     }
-
-    /* SIDEBAR BACKGROUND - MATCHES MAIN PAGE */
     .stSidebar,
     .stSidebar .sidebar-content,
     .css-1d391kg,
@@ -40,8 +38,6 @@ st.markdown("""
     section[data-testid="stSidebar"] {
         background: #0a0a0a !important;
     }
-
-    /* Make all sidebar text white */
     .stSidebar .stRadio label,
     .stSidebar .stRadio div,
     .stSidebar .stMarkdown,
@@ -51,7 +47,6 @@ st.markdown("""
     .stSidebar .stTextInput label {
         color: #ffffff !important;
     }
-
     .main-title {
         color: #FF0000;
         font-size: 3.5rem;
@@ -187,17 +182,29 @@ with st.sidebar:
     
     st.markdown(f'<div class="voice-text">{voice_text}</div>', unsafe_allow_html=True)
     
-    # ---------- Voice Alert: gTTS (primary) + Fallback ----------
+    # ---------- Voice Alert: gTTS with autoplay ----------
     if st.button("🔊 Play Voice Alert (Female)", use_container_width=True):
         if GTTS_AVAILABLE:
             with st.spinner("🔊 Generating voice with gTTS..."):
                 try:
+                    # Generate speech
                     tts = gTTS(text=voice_text, lang=lang_code, slow=False)
                     audio_bytes = BytesIO()
                     tts.write_to_fp(audio_bytes)
                     audio_bytes.seek(0)
-                    st.audio(audio_bytes, format='audio/mp3')
-                    st.success("✅ Female voice played using gTTS!")
+                    
+                    # Encode to base64
+                    audio_base64 = base64.b64encode(audio_bytes.read()).decode()
+                    
+                    # Create HTML5 audio with autoplay
+                    audio_html = f"""
+                        <audio autoplay style="width: 100%;">
+                            <source src="data:audio/mp3;base64,{audio_base64}" type="audio/mp3">
+                            Your browser does not support the audio element.
+                        </audio>
+                    """
+                    st.markdown(audio_html, unsafe_allow_html=True)
+                    st.success("✅ Female voice is playing (gTTS)!")
                 except Exception as e:
                     st.error(f"❌ gTTS error: {e}")
                     st.info("💡 Falling back to browser speech synthesis...")
@@ -230,7 +237,7 @@ with st.sidebar:
                     st.components.v1.html(js_code, height=0)
                     st.success("🔊 Voice playing via browser fallback!")
         else:
-            # gTTS not installed – use browser TTS directly
+            # gTTS not available – use browser TTS directly
             st.info("💡 gTTS not available. Using browser speech synthesis.")
             escaped_text = voice_text.replace("`", "\\`").replace("'", "\\'")
             js_code = f"""
@@ -291,7 +298,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ---------- City List (EXACT 55 cities) ----------
+# ---------- City List ----------
 st.markdown('<h2 class="city-heading">📍 Affected Cities in Southern Haiti</h2>', unsafe_allow_html=True)
 
 southern_cities = [
