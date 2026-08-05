@@ -2,6 +2,9 @@ import streamlit as st
 from gtts import gTTS
 from io import BytesIO
 
+# ---------- DEBUG: Check if app reaches here ----------
+print("✅ app.py is running. Python version:", __import__('sys').version)
+
 # ---------- Page Config ----------
 st.set_page_config(
     page_title="Alert for Digicel Haiti",
@@ -239,3 +242,7 @@ st.markdown("""
     </p>
 </div>
 """, unsafe_allow_html=True)
+
+# ---------- DEBUG: Confirm app loaded successfully ----------
+print("✅ app.py loaded successfully!")
+st.success("✅ App loaded successfully!")
