@@ -164,24 +164,35 @@ with st.sidebar:
         index=0
     )
     
-    # ---------- Translations for sidebar voice text ----------
-    english_text = """This alert is for the Digicel telecommunication phone company. Users with Digicel SIM cards complain that when they do any internet plan on their phone, it never works and they lose money on their account making these plans. They cannot use WhatsApp, Facebook, or any social media. The Digicel company must fix this issue that has been going on for three years and a few months till 2026. Old Digicel users plan to change internet phone company if this issue persists. This message alert was brought to you by Gesner Deslandes, software engineer at GlobalInternet.py."""
+    # ---------- Base alert texts (displayed in sidebar) ----------
+    english_alert = """This alert is for the Digicel telecommunication phone company. Users with Digicel SIM cards complain that when they do any internet plan on their phone, it never works and they lose money on their account making these plans. They cannot use WhatsApp, Facebook, or any social media. The Digicel company must fix this issue that has been going on for three years and a few months till 2026. Old Digicel users plan to change internet phone company if this issue persists. This message alert was brought to you by Gesner Deslandes, software engineer at GlobalInternet.py."""
     
-    french_text = """Cette alerte concerne la compagnie de télécommunications Digicel. Les utilisateurs avec des cartes SIM Digicel se plaignent que lorsqu'ils font un forfait internet sur leur téléphone, cela ne fonctionne jamais et ils perdent de l'argent sur leur compte en faisant ces forfaits. Ils ne peuvent pas utiliser WhatsApp, Facebook ou aucun réseau social. La compagnie Digicel doit résoudre ce problème qui dure depuis trois ans et quelques mois jusqu'en 2026. Les anciens utilisateurs de Digicel prévoient de changer de compagnie de téléphone internet si ce problème persiste. Ce message d'alerte vous a été présenté par Gesner Deslandes, ingénieur logiciel chez GlobalInternet.py."""
+    french_alert = """Cette alerte concerne la compagnie de télécommunications Digicel. Les utilisateurs avec des cartes SIM Digicel se plaignent que lorsqu'ils font un forfait internet sur leur téléphone, cela ne fonctionne jamais et ils perdent de l'argent sur leur compte en faisant ces forfaits. Ils ne peuvent pas utiliser WhatsApp, Facebook ou aucun réseau social. La compagnie Digicel doit résoudre ce problème qui dure depuis trois ans et quelques mois jusqu'en 2026. Les anciens utilisateurs de Digicel prévoient de changer de compagnie de téléphone internet si ce problème persiste. Ce message d'alerte vous a été présenté par Gesner Deslandes, ingénieur logiciel chez GlobalInternet.py."""
     
-    spanish_text = """Esta alerta es para la compañía de telecomunicaciones Digicel. Los usuarios con tarjetas SIM Digicel se quejan de que cuando contratan un plan de internet en su teléfono, nunca funciona y pierden dinero en su cuenta al hacer estos planes. No pueden usar WhatsApp, Facebook ni ninguna red social. La compañía Digicel debe solucionar este problema que ha estado ocurriendo durante tres años y algunos meses hasta 2026. Los usuarios antiguos de Digicel planean cambiar de compañía de teléfono internet si este problema persiste. Este mensaje de alerta fue presentado por Gesner Deslandes, ingeniero de software en GlobalInternet.py."""
+    spanish_alert = """Esta alerta es para la compañía de telecomunicaciones Digicel. Los usuarios con tarjetas SIM Digicel se quejan de que cuando contratan un plan de internet en su teléfono, nunca funciona y pierden dinero en su cuenta al hacer estos planes. No pueden usar WhatsApp, Facebook ni ninguna red social. La compañía Digicel debe solucionar este problema que ha estado ocurriendo durante tres años y algunos meses hasta 2026. Los usuarios antiguos de Digicel planean cambiar de compañía de teléfono internet si este problema persiste. Este mensaje de alerta fue presentado por Gesner Deslandes, ingeniero de software en GlobalInternet.py."""
+    
+    # ---------- Extended voice scripts (include invitation to view the city list) ----------
+    english_voice = english_alert + " You can view the full list of affected cities in Southern Haiti on the main page of this alert."
+    
+    french_voice = french_alert + " Vous pouvez consulter la liste complète des villes touchées dans le Sud d'Haïti sur la page principale de cette alerte."
+    
+    spanish_voice = spanish_alert + " Puede ver la lista completa de ciudades afectadas en el Sur de Haití en la página principal de esta alerta."
     
     if lang_tab == "🇺🇸 English":
-        voice_text = english_text
+        displayed_text = english_alert
+        voice_text = english_voice
         lang_code = 'en'
     elif lang_tab == "🇫🇷 Français":
-        voice_text = french_text
+        displayed_text = french_alert
+        voice_text = french_voice
         lang_code = 'fr'
     else:
-        voice_text = spanish_text
+        displayed_text = spanish_alert
+        voice_text = spanish_voice
         lang_code = 'es'
     
-    st.markdown(f'<div class="voice-text">{voice_text}</div>', unsafe_allow_html=True)
+    # Display the alert text (without the extra invitation) in the sidebar
+    st.markdown(f'<div class="voice-text">{displayed_text}</div>', unsafe_allow_html=True)
     
     # ---------- Voice Alert: gTTS with autoplay ----------
     if st.button("🔊 Play Voice Alert (Female)", use_container_width=True):
