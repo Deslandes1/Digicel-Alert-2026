@@ -17,6 +17,25 @@ print("✅ Page config set.")
 # ---------- Custom CSS ----------
 st.markdown("""
     <style>
+    /* MAIN PAGE BACKGROUND */
+    .stApp {
+        background: #0a0a0a !important;
+    }
+
+    /* SIDEBAR BACKGROUND - MATCHES MAIN PAGE */
+    .stSidebar {
+        background: #0a0a0a !important;
+    }
+    .stSidebar .sidebar-content {
+        background: #0a0a0a !important;
+    }
+    .stSidebar .stRadio label {
+        color: #ffffff !important;
+    }
+    .stSidebar .stRadio div {
+        color: #ffffff !important;
+    }
+
     .main-title {
         color: #FF0000;
         font-size: 3.5rem;
@@ -44,7 +63,7 @@ st.markdown("""
         margin: 5px 0;
         border-left: 4px solid #FF0000;
         transition: 0.3s;
-        color: #ffffff !important;   /* BRIGHT WHITE */
+        color: #ffffff !important;
         font-weight: 500;
     }
     .city-card:hover {
@@ -65,7 +84,7 @@ st.markdown("""
         border: 1px solid rgba(255, 0, 0, 0.3);
     }
     .contact-info * {
-        color: #ffffff !important;   /* BRIGHT WHITE */
+        color: #ffffff !important;
     }
     .warning-box {
         background: rgba(255, 0, 0, 0.15);
@@ -75,17 +94,15 @@ st.markdown("""
         margin: 20px 0;
     }
     .warning-box * {
-        color: #ffffff !important;   /* BRIGHT WHITE */
+        color: #ffffff !important;
     }
-    .stApp { background: #0a0a0a; }
-    .stSidebar { background: #1a1a2e; }
     .voice-text {
         background: rgba(255, 0, 0, 0.08);
         padding: 15px;
         border-radius: 10px;
         border-left: 4px solid #FF0000;
         margin: 10px 0;
-        color: #ffffff !important;   /* BRIGHT WHITE */
+        color: #ffffff !important;
         font-size: 0.95rem;
         line-height: 1.6;
     }
@@ -96,11 +113,11 @@ st.markdown("""
     }
     .footer-text p {
         font-size: 0.9rem;
-        color: #ffffff !important;   /* BRIGHT WHITE */
+        color: #ffffff !important;
     }
     .footer-text .small {
         font-size: 0.8rem;
-        color: #aaaaaa !important;   /* Slightly dimmer but still bright */
+        color: #aaaaaa !important;
     }
     .city-heading {
         color: #ffffff !important;
@@ -111,6 +128,16 @@ st.markdown("""
         color: #ffffff !important;
         font-weight: 600;
         margin-top: 10px;
+    }
+    /* Make radio buttons and labels white */
+    .stRadio label {
+        color: #ffffff !important;
+    }
+    .stRadio div {
+        color: #ffffff !important;
+    }
+    .stMarkdown {
+        color: #ffffff !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -145,48 +172,72 @@ with st.sidebar:
     
     st.markdown(f'<div class="voice-text">{voice_text}</div>', unsafe_allow_html=True)
     
-    # ---------- Female AI Voice Alert ----------
+    # ---------- FIXED: Female AI Voice Alert ----------
     if st.button("🔊 Play Voice Alert (Female)", use_container_width=True):
+        # Escape special characters for JavaScript
         escaped_text = voice_text.replace("`", "\\`").replace("'", "\\'")
+        
+        # Create a more robust JavaScript that uses the global speechSynthesis API
         js_code = f"""
         <script>
-        const msg = new SpeechSynthesisUtterance(`{escaped_text}`);
-        msg.lang = '{lang_code}';
-        msg.rate = 0.9;
-        msg.pitch = 1.1;   // Slightly higher pitch for a more feminine tone
-        
-        function speakWithVoice() {{
-            const voices = speechSynthesis.getVoices();
-            // Try to find a female voice for the selected language
-            let voice = null;
+        (function() {{
+            console.log("🔊 Voice alert triggered.");
+            const utterance = new SpeechSynthesisUtterance(`{escaped_text}`);
+            utterance.lang = '{lang_code}';
+            utterance.rate = 0.9;
+            utterance.pitch = 1.1;
             
-            // First, look for voices that contain 'female' in the name (case-insensitive)
-            for (let v of voices) {{
-                if (v.lang.startsWith('{lang_code}') && v.name.toLowerCase().includes('female')) {{
-                    voice = v;
-                    break;
+            function findFemaleVoice() {{
+                const voices = speechSynthesis.getVoices();
+                console.log("Available voices:", voices.length);
+                // First try to find a female voice
+                for (let voice of voices) {{
+                    if (voice.lang.startsWith('{lang_code}') && 
+                        voice.name.toLowerCase().includes('female')) {{
+                        return voice;
+                    }}
                 }}
+                // Fallback: find any voice matching the language
+                for (let voice of voices) {{
+                    if (voice.lang.startsWith('{lang_code}')) {{
+                        return voice;
+                    }}
+                }}
+                // Last resort: use the first available voice
+                return voices.length > 0 ? voices[0] : null;
             }}
-            // If no female voice found, pick the first voice that matches the language
-            if (!voice) {{
-                voice = voices.find(v => v.lang.startsWith('{lang_code}'));
-            }}
-            // If still none, use the default voice
-            if (voice) msg.voice = voice;
             
-            speechSynthesis.speak(msg);
-        }}
-        
-        if (speechSynthesis.getVoices().length > 0) {{
-            speakWithVoice();
-        }} else {{
-            speechSynthesis.onvoiceschanged = speakWithVoice;
-        }}
+            function speak() {{
+                const voice = findFemaleVoice();
+                if (voice) {{
+                    utterance.voice = voice;
+                    console.log("Using voice:", voice.name);
+                }}
+                speechSynthesis.speak(utterance);
+            }}
+            
+            // Wait for voices to load if needed
+            if (speechSynthesis.getVoices().length > 0) {{
+                speak();
+            }} else {{
+                speechSynthesis.onvoiceschanged = function() {{
+                    speak();
+                    speechSynthesis.onvoiceschanged = null;
+                }};
+            }}
+        }})();
         </script>
         """
-        st.components.v1.html(js_code, height=0)
-        st.success("🔊 Female voice is playing via your browser!")
-        st.info("💡 If you don't hear anything, check your browser's volume and permissions.")
+        
+        # Use st.html instead of st.components to avoid the AttributeError
+        try:
+            st.components.v1.html(js_code, height=50)
+            st.success("🔊 Female voice is playing via your browser!")
+            st.info("💡 If you don't hear anything, check your browser's volume and permissions.")
+        except AttributeError:
+            # Fallback: use st.markdown with iframe
+            st.markdown(f'<iframe srcdoc="{js_code}" style="width:100%;height:50px;border:none;"></iframe>', unsafe_allow_html=True)
+            st.success("🔊 Voice alert triggered!")
     
     st.markdown("---")
     
