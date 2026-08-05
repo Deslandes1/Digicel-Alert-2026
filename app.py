@@ -1,7 +1,6 @@
 import streamlit as st
 from gtts import gTTS
 from io import BytesIO
-import base64
 
 # ---------- Page Config ----------
 st.set_page_config(
@@ -126,9 +125,9 @@ with st.sidebar:
     # Display the voice text
     st.markdown(f'<div class="voice-text">{voice_text}</div>', unsafe_allow_html=True)
     
-    # ---------- Voice Generation with gTTS (Primary) ----------
-    if st.button("🔊 Play Voice Alert (gTTS)", use_container_width=True):
-        with st.spinner("🔊 Generating voice with gTTS..."):
+    # ---------- Voice Generation with gTTS ----------
+    if st.button("🔊 Play Voice Alert", use_container_width=True):
+        with st.spinner("🔊 Generating voice..."):
             try:
                 # Generate speech in memory using gTTS
                 tts = gTTS(text=voice_text, lang=lang_code, slow=False)
@@ -138,10 +137,12 @@ with st.sidebar:
                 
                 # Display audio player
                 st.audio(audio_bytes, format='audio/mp3')
-                st.success("✅ Voice played using gTTS!")
+                st.success("✅ Voice alert played!")
             except Exception as e:
-                st.error(f"❌ gTTS error: {str(e)}")
-                st.info("💡 Trying browser speech synthesis as fallback...")
+                st.error(f"❌ Error: {str(e)}")
+                st.info("💡 Please ensure you have an internet connection for gTTS to work.")
+                st.info("🔊 Trying browser speech synthesis as fallback...")
+                
                 # ---------- Fallback: Browser Speech Synthesis ----------
                 escaped_text = voice_text.replace("`", "\\`").replace("'", "\\'")
                 js_code = f"""
@@ -165,7 +166,6 @@ with st.sidebar:
                 """
                 st.components.v1.html(js_code, height=0)
                 st.success("🔊 Voice playing via browser fallback!")
-                st.info("💡 If you don't hear anything, check your browser's volume settings.")
     
     st.markdown("---")
     
