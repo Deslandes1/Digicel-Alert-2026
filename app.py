@@ -1,6 +1,6 @@
 import streamlit as st
 
-# ---------- DEBUG: Check if app reaches here ----------
+# ---------- DEBUG ----------
 print("✅ app.py is starting...")
 print("✅ Python version:", __import__('sys').version)
 
@@ -103,21 +103,18 @@ print("✅ CSS applied.")
 with st.sidebar:
     st.markdown('<div class="sidebar-title">🚨 AI Voice Alert</div>', unsafe_allow_html=True)
     
-    # Language Selection
     lang_tab = st.radio(
         "Select Language / Choisissez la langue / Seleccione el idioma",
         ["🇺🇸 English", "🇫🇷 Français", "🇪🇸 Español"],
         index=0
     )
     
-    # Multilingual Alert Texts
     english_text = """This alert is for the Digicel telecommunication phone company. Users with Digicel SIM cards complain that when they do any internet plan on their phone, it never works and they lose money on their account making these plans. They cannot use WhatsApp, Facebook, or any social media. The Digicel company must fix this issue that has been going on for three years and a few months till 2026. Old Digicel users plan to change internet phone company if this issue persists. This message alert was brought to you by Gesner Deslandes, software engineer at GlobalInternet.py."""
     
     french_text = """Cette alerte concerne la compagnie de télécommunications Digicel. Les utilisateurs avec des cartes SIM Digicel se plaignent que lorsqu'ils font un forfait internet sur leur téléphone, cela ne fonctionne jamais et ils perdent de l'argent sur leur compte en faisant ces forfaits. Ils ne peuvent pas utiliser WhatsApp, Facebook ou aucun réseau social. La compagnie Digicel doit résoudre ce problème qui dure depuis trois ans et quelques mois jusqu'en 2026. Les anciens utilisateurs de Digicel prévoient de changer de compagnie de téléphone internet si ce problème persiste. Ce message d'alerte vous a été présenté par Gesner Deslandes, ingénieur logiciel chez GlobalInternet.py."""
     
     spanish_text = """Esta alerta es para la compañía de telecomunicaciones Digicel. Los usuarios con tarjetas SIM Digicel se quejan de que cuando contratan un plan de internet en su teléfono, nunca funciona y pierden dinero en su cuenta al hacer estos planes. No pueden usar WhatsApp, Facebook ni ninguna red social. La compañía Digicel debe solucionar este problema que ha estado ocurriendo durante tres años y algunos meses hasta 2026. Los usuarios antiguos de Digicel planean cambiar de compañía de teléfono internet si este problema persiste. Este mensaje de alerta fue presentado por Gesner Deslandes, ingeniero de software en GlobalInternet.py."""
     
-    # Set text based on language
     if lang_tab == "🇺🇸 English":
         voice_text = english_text
         lang_code = 'en'
@@ -128,30 +125,23 @@ with st.sidebar:
         voice_text = spanish_text
         lang_code = 'es'
     
-    # Display the voice text
     st.markdown(f'<div class="voice-text">{voice_text}</div>', unsafe_allow_html=True)
     
-    # ---------- Voice Alert: Pure Browser Speech Synthesis ----------
+    # ---------- Voice Alert: Browser Speech Synthesis ----------
     if st.button("🔊 Play Voice Alert", use_container_width=True):
-        # Escape special characters for JavaScript
         escaped_text = voice_text.replace("`", "\\`").replace("'", "\\'")
-        
         js_code = f"""
         <script>
-        console.log("🔊 Voice alert triggered.");
         const msg = new SpeechSynthesisUtterance(`{escaped_text}`);
         msg.lang = '{lang_code}';
         msg.rate = 0.9;
         msg.pitch = 1.1;
-        
         function speakWithVoice() {{
             const voices = speechSynthesis.getVoices();
             const voice = voices.find(v => v.lang.startsWith('{lang_code}'));
             if (voice) msg.voice = voice;
             speechSynthesis.speak(msg);
-            console.log("🔊 Speaking...");
         }}
-        
         if (speechSynthesis.getVoices().length > 0) {{
             speakWithVoice();
         }} else {{
@@ -165,7 +155,6 @@ with st.sidebar:
     
     st.markdown("---")
     
-    # ---------- Contact Information ----------
     st.markdown('<div class="contact-info">', unsafe_allow_html=True)
     st.markdown("### 📱 Contact Information")
     st.markdown("**Gesner Deslandes**")
@@ -184,7 +173,6 @@ with st.sidebar:
 st.markdown('<div class="main-title">🚨 ALERT FOR DIGICEL HAITI</div>', unsafe_allow_html=True)
 st.markdown('<div class="sub-title">⚠️ Internet Connection is NOT Working ⚠️</div>', unsafe_allow_html=True)
 
-# Warning Box
 st.markdown("""
 <div class="warning-box">
     <h3 style="color: #FF4444; margin: 0;">⚠️ URGENT ALERT</h3>
@@ -196,7 +184,6 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ---------- City List ----------
 st.markdown("### 📍 Affected Cities in Southern Haiti")
 
 southern_cities = [
@@ -221,7 +208,6 @@ for idx, city in enumerate(southern_cities):
 
 st.caption(f"📊 Total affected cities: {len(southern_cities)}")
 
-# ---------- Footer ----------
 st.markdown("---")
 st.markdown("""
 <div class="footer-text">
@@ -235,6 +221,5 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ---------- DEBUG: Final confirmation ----------
 print("✅ app.py loaded completely and rendered successfully.")
 st.success("✅ App ready!")
