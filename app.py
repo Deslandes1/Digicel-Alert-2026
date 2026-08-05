@@ -1,8 +1,20 @@
 import streamlit as st
+from io import BytesIO
 
+# Try importing gTTS; if not available, use fallback
+try:
+    from gtts import gTTS
+    GTTS_AVAILABLE = True
+except ImportError:
+    GTTS_AVAILABLE = False
+    print("⚠️ gTTS not installed. Using browser speech synthesis fallback.")
+
+# ---------- DEBUG ----------
 print("✅ app.py is starting...")
 print("✅ Python version:", __import__('sys').version)
+print("✅ gTTS available:", GTTS_AVAILABLE)
 
+# ---------- Page Config ----------
 st.set_page_config(
     page_title="Alert for Digicel Haiti",
     page_icon="🚨",
@@ -10,35 +22,144 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
+print("✅ Page config set.")
+
+# ---------- Custom CSS ----------
 st.markdown("""
     <style>
-    .stApp { background: #0a0a0a !important; }
-    .stSidebar, section[data-testid="stSidebar"] { background: #0a0a0a !important; }
-    .stSidebar .stRadio label, .stSidebar .stRadio div,
-    .stSidebar .stMarkdown, .stSidebar .stCaption,
-    .stSidebar .stButton button { color: #ffffff !important; }
-    .main-title { color: #FF0000; font-size: 3.5rem; font-weight: 900; text-align: center; text-shadow: 0 0 30px rgba(255, 0, 0, 0.4); animation: pulse 2s ease-in-out infinite; padding: 20px 0; }
-    @keyframes pulse { 0%, 100% { text-shadow: 0 0 30px rgba(255, 0, 0, 0.4); } 50% { text-shadow: 0 0 60px rgba(255, 0, 0, 0.8), 0 0 120px rgba(255, 0, 0, 0.3); } }
-    .sub-title { color: #FF4444; font-size: 1.5rem; text-align: center; font-weight: 600; margin-bottom: 30px; }
-    .city-card { background: rgba(255, 255, 255, 0.05); border-radius: 10px; padding: 10px 15px; margin: 5px 0; border-left: 4px solid #FF0000; transition: 0.3s; color: #ffffff !important; font-weight: 500; }
-    .city-card:hover { background: rgba(255, 0, 0, 0.1); transform: translateX(5px); }
-    .sidebar-title { color: #FF6666; font-size: 1.2rem; font-weight: 700; margin-bottom: 15px; }
-    .contact-info { background: rgba(255, 0, 0, 0.1); border-radius: 10px; padding: 15px; margin-top: 20px; border: 1px solid rgba(255, 0, 0, 0.3); }
-    .contact-info * { color: #ffffff !important; }
-    .warning-box { background: rgba(255, 0, 0, 0.15); border: 2px solid #FF0000; border-radius: 10px; padding: 20px; margin: 20px 0; }
-    .warning-box * { color: #ffffff !important; }
-    .voice-text { background: rgba(255, 0, 0, 0.08); padding: 15px; border-radius: 10px; border-left: 4px solid #FF0000; margin: 10px 0; color: #ffffff !important; font-size: 0.95rem; line-height: 1.6; }
-    .footer-text { text-align: center; padding: 20px 0; color: #888; }
-    .footer-text p { font-size: 0.9rem; color: #ffffff !important; }
-    .footer-text .small { font-size: 0.8rem; color: #aaaaaa !important; }
-    .city-heading { color: #ffffff !important; font-weight: 700; margin-bottom: 20px; }
-    .total-cities { color: #ffffff !important; font-weight: 600; margin-top: 10px; }
-    .stRadio label { color: #ffffff !important; }
-    .stRadio div { color: #ffffff !important; }
-    .stMarkdown { color: #ffffff !important; }
+    /* MAIN PAGE BACKGROUND */
+    .stApp {
+        background: #0a0a0a !important;
+    }
+
+    /* SIDEBAR BACKGROUND - MATCHES MAIN PAGE */
+    .stSidebar,
+    .stSidebar .sidebar-content,
+    .css-1d391kg,
+    .css-1lcbmhc,
+    section[data-testid="stSidebar"] {
+        background: #0a0a0a !important;
+    }
+
+    /* Make all sidebar text white */
+    .stSidebar .stRadio label,
+    .stSidebar .stRadio div,
+    .stSidebar .stMarkdown,
+    .stSidebar .stCaption,
+    .stSidebar .stButton button,
+    .stSidebar .stSelectbox label,
+    .stSidebar .stTextInput label {
+        color: #ffffff !important;
+    }
+
+    .main-title {
+        color: #FF0000;
+        font-size: 3.5rem;
+        font-weight: 900;
+        text-align: center;
+        text-shadow: 0 0 30px rgba(255, 0, 0, 0.4);
+        animation: pulse 2s ease-in-out infinite;
+        padding: 20px 0;
+    }
+    @keyframes pulse {
+        0%, 100% { text-shadow: 0 0 30px rgba(255, 0, 0, 0.4); }
+        50% { text-shadow: 0 0 60px rgba(255, 0, 0, 0.8), 0 0 120px rgba(255, 0, 0, 0.3); }
+    }
+    .sub-title {
+        color: #FF4444;
+        font-size: 1.5rem;
+        text-align: center;
+        font-weight: 600;
+        margin-bottom: 30px;
+    }
+    .city-card {
+        background: rgba(255, 255, 255, 0.05);
+        border-radius: 10px;
+        padding: 10px 15px;
+        margin: 5px 0;
+        border-left: 4px solid #FF0000;
+        transition: 0.3s;
+        color: #ffffff !important;
+        font-weight: 500;
+    }
+    .city-card:hover {
+        background: rgba(255, 0, 0, 0.1);
+        transform: translateX(5px);
+    }
+    .sidebar-title {
+        color: #FF6666;
+        font-size: 1.2rem;
+        font-weight: 700;
+        margin-bottom: 15px;
+    }
+    .contact-info {
+        background: rgba(255, 0, 0, 0.1);
+        border-radius: 10px;
+        padding: 15px;
+        margin-top: 20px;
+        border: 1px solid rgba(255, 0, 0, 0.3);
+    }
+    .contact-info * {
+        color: #ffffff !important;
+    }
+    .warning-box {
+        background: rgba(255, 0, 0, 0.15);
+        border: 2px solid #FF0000;
+        border-radius: 10px;
+        padding: 20px;
+        margin: 20px 0;
+    }
+    .warning-box * {
+        color: #ffffff !important;
+    }
+    .voice-text {
+        background: rgba(255, 0, 0, 0.08);
+        padding: 15px;
+        border-radius: 10px;
+        border-left: 4px solid #FF0000;
+        margin: 10px 0;
+        color: #ffffff !important;
+        font-size: 0.95rem;
+        line-height: 1.6;
+    }
+    .footer-text {
+        text-align: center;
+        padding: 20px 0;
+        color: #888;
+    }
+    .footer-text p {
+        font-size: 0.9rem;
+        color: #ffffff !important;
+    }
+    .footer-text .small {
+        font-size: 0.8rem;
+        color: #aaaaaa !important;
+    }
+    .city-heading {
+        color: #ffffff !important;
+        font-weight: 700;
+        margin-bottom: 20px;
+    }
+    .total-cities {
+        color: #ffffff !important;
+        font-weight: 600;
+        margin-top: 10px;
+    }
+    .stRadio label {
+        color: #ffffff !important;
+    }
+    .stRadio div {
+        color: #ffffff !important;
+    }
+    .stMarkdown {
+        color: #ffffff !important;
+    }
     </style>
 """, unsafe_allow_html=True)
 
+print("✅ CSS applied.")
+
+# ---------- Sidebar ----------
 with st.sidebar:
     st.markdown('<div class="sidebar-title">🚨 AI Voice Alert</div>', unsafe_allow_html=True)
     
@@ -66,35 +187,81 @@ with st.sidebar:
     
     st.markdown(f'<div class="voice-text">{voice_text}</div>', unsafe_allow_html=True)
     
-    if st.button("🔊 Play Voice Alert", use_container_width=True):
-        escaped_text = voice_text.replace("`", "\\`").replace("'", "\\'")
-        js_code = f"""
-        <script>
-        const msg = new SpeechSynthesisUtterance(`{escaped_text}`);
-        msg.lang = '{lang_code}';
-        msg.rate = 0.9;
-        msg.pitch = 1.1;
-        function speakWithVoice() {{
-            const voices = speechSynthesis.getVoices();
-            let voice = null;
-            for (let v of voices) {{
-                if (v.lang.startsWith('{lang_code}') && v.name.toLowerCase().includes('female')) {{
-                    voice = v;
-                    break;
+    # ---------- Voice Alert: gTTS (primary) + Fallback ----------
+    if st.button("🔊 Play Voice Alert (Female)", use_container_width=True):
+        if GTTS_AVAILABLE:
+            with st.spinner("🔊 Generating voice with gTTS..."):
+                try:
+                    tts = gTTS(text=voice_text, lang=lang_code, slow=False)
+                    audio_bytes = BytesIO()
+                    tts.write_to_fp(audio_bytes)
+                    audio_bytes.seek(0)
+                    st.audio(audio_bytes, format='audio/mp3')
+                    st.success("✅ Female voice played using gTTS!")
+                except Exception as e:
+                    st.error(f"❌ gTTS error: {e}")
+                    st.info("💡 Falling back to browser speech synthesis...")
+                    # Fallback: browser TTS
+                    escaped_text = voice_text.replace("`", "\\`").replace("'", "\\'")
+                    js_code = f"""
+                    <script>
+                    const utterance = new SpeechSynthesisUtterance(`{escaped_text}`);
+                    utterance.lang = '{lang_code}';
+                    utterance.rate = 0.9;
+                    utterance.pitch = 1.1;
+                    function findFemaleVoice() {{
+                        const voices = speechSynthesis.getVoices();
+                        for (let v of voices) {{
+                            if (v.lang.startsWith('{lang_code}') && v.name.toLowerCase().includes('female')) {{
+                                return v;
+                            }}
+                        }}
+                        return voices.find(v => v.lang.startsWith('{lang_code}')) || null;
+                    }}
+                    function speak() {{
+                        const voice = findFemaleVoice();
+                        if (voice) utterance.voice = voice;
+                        speechSynthesis.speak(utterance);
+                    }}
+                    if (speechSynthesis.getVoices().length > 0) speak();
+                    else speechSynthesis.onvoiceschanged = speak;
+                    </script>
+                    """
+                    st.components.v1.html(js_code, height=0)
+                    st.success("🔊 Voice playing via browser fallback!")
+        else:
+            # gTTS not installed – use browser TTS directly
+            st.info("💡 gTTS not available. Using browser speech synthesis.")
+            escaped_text = voice_text.replace("`", "\\`").replace("'", "\\'")
+            js_code = f"""
+            <script>
+            const utterance = new SpeechSynthesisUtterance(`{escaped_text}`);
+            utterance.lang = '{lang_code}';
+            utterance.rate = 0.9;
+            utterance.pitch = 1.1;
+            function findFemaleVoice() {{
+                const voices = speechSynthesis.getVoices();
+                for (let v of voices) {{
+                    if (v.lang.startsWith('{lang_code}') && v.name.toLowerCase().includes('female')) {{
+                        return v;
+                    }}
                 }}
+                return voices.find(v => v.lang.startsWith('{lang_code}')) || null;
             }}
-            if (!voice) voice = voices.find(v => v.lang.startsWith('{lang_code}'));
-            if (voice) msg.voice = voice;
-            speechSynthesis.speak(msg);
-        }}
-        if (speechSynthesis.getVoices().length > 0) {{ speakWithVoice(); }}
-        else {{ speechSynthesis.onvoiceschanged = speakWithVoice; }}
-        </script>
-        """
-        st.components.v1.html(js_code, height=0)
-        st.success("🔊 Voice playing!")
+            function speak() {{
+                const voice = findFemaleVoice();
+                if (voice) utterance.voice = voice;
+                speechSynthesis.speak(utterance);
+            }}
+            if (speechSynthesis.getVoices().length > 0) speak();
+            else speechSynthesis.onvoiceschanged = speak;
+            </script>
+            """
+            st.components.v1.html(js_code, height=0)
+            st.success("🔊 Voice playing via browser!")
     
     st.markdown("---")
+    
     st.markdown('<div class="contact-info">', unsafe_allow_html=True)
     st.markdown("### 📱 Contact Information")
     st.markdown("**Gesner Deslandes**")
@@ -104,10 +271,12 @@ with st.sidebar:
     st.markdown("📧 **deslandes78@gmail.com**")
     st.markdown("🌐 [GlobalInternet.py](https://globalinternetsitepy-abh7v6tnmskxxnuplrdcgk.streamlit.app/)")
     st.markdown('</div>', unsafe_allow_html=True)
+    
     st.markdown("---")
     st.caption("🚨 Alert System v3.0")
     st.caption("Brought to you by GlobalInternet.py")
 
+# ---------- Main Content ----------
 st.markdown('<div class="main-title">🚨 ALERT FOR DIGICEL HAITI</div>', unsafe_allow_html=True)
 st.markdown('<div class="sub-title">⚠️ Internet Connection is NOT Working ⚠️</div>', unsafe_allow_html=True)
 
@@ -122,6 +291,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
+# ---------- City List (EXACT 55 cities) ----------
 st.markdown('<h2 class="city-heading">📍 Affected Cities in Southern Haiti</h2>', unsafe_allow_html=True)
 
 southern_cities = [
@@ -146,6 +316,7 @@ for idx, city in enumerate(southern_cities):
 
 st.markdown(f'<div class="total-cities">📊 Total affected cities: {len(southern_cities)}</div>', unsafe_allow_html=True)
 
+# ---------- Footer ----------
 st.markdown("---")
 st.markdown("""
 <div class="footer-text">
@@ -159,4 +330,5 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
+print("✅ app.py loaded completely and rendered successfully.")
 st.success("✅ App ready!")
