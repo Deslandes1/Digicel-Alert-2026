@@ -164,6 +164,7 @@ with st.sidebar:
         index=0
     )
     
+    # ---------- Translations for sidebar voice text ----------
     english_text = """This alert is for the Digicel telecommunication phone company. Users with Digicel SIM cards complain that when they do any internet plan on their phone, it never works and they lose money on their account making these plans. They cannot use WhatsApp, Facebook, or any social media. The Digicel company must fix this issue that has been going on for three years and a few months till 2026. Old Digicel users plan to change internet phone company if this issue persists. This message alert was brought to you by Gesner Deslandes, software engineer at GlobalInternet.py."""
     
     french_text = """Cette alerte concerne la compagnie de télécommunications Digicel. Les utilisateurs avec des cartes SIM Digicel se plaignent que lorsqu'ils font un forfait internet sur leur téléphone, cela ne fonctionne jamais et ils perdent de l'argent sur leur compte en faisant ces forfaits. Ils ne peuvent pas utiliser WhatsApp, Facebook ou aucun réseau social. La compagnie Digicel doit résoudre ce problème qui dure depuis trois ans et quelques mois jusqu'en 2026. Les anciens utilisateurs de Digicel prévoient de changer de compagnie de téléphone internet si ce problème persiste. Ce message d'alerte vous a été présenté par Gesner Deslandes, ingénieur logiciel chez GlobalInternet.py."""
@@ -187,16 +188,12 @@ with st.sidebar:
         if GTTS_AVAILABLE:
             with st.spinner("🔊 Generating voice with gTTS..."):
                 try:
-                    # Generate speech
                     tts = gTTS(text=voice_text, lang=lang_code, slow=False)
                     audio_bytes = BytesIO()
                     tts.write_to_fp(audio_bytes)
                     audio_bytes.seek(0)
                     
-                    # Encode to base64
                     audio_base64 = base64.b64encode(audio_bytes.read()).decode()
-                    
-                    # Create HTML5 audio with autoplay
                     audio_html = f"""
                         <audio autoplay style="width: 100%;">
                             <source src="data:audio/mp3;base64,{audio_base64}" type="audio/mp3">
@@ -208,7 +205,6 @@ with st.sidebar:
                 except Exception as e:
                     st.error(f"❌ gTTS error: {e}")
                     st.info("💡 Falling back to browser speech synthesis...")
-                    # Fallback: browser TTS
                     escaped_text = voice_text.replace("`", "\\`").replace("'", "\\'")
                     js_code = f"""
                     <script>
@@ -237,7 +233,6 @@ with st.sidebar:
                     st.components.v1.html(js_code, height=0)
                     st.success("🔊 Voice playing via browser fallback!")
         else:
-            # gTTS not available – use browser TTS directly
             st.info("💡 gTTS not available. Using browser speech synthesis.")
             escaped_text = voice_text.replace("`", "\\`").replace("'", "\\'")
             js_code = f"""
@@ -283,23 +278,46 @@ with st.sidebar:
     st.caption("🚨 Alert System v3.0")
     st.caption("Brought to you by GlobalInternet.py")
 
-# ---------- Main Content ----------
-st.markdown('<div class="main-title">🚨 ALERT FOR DIGICEL HAITI</div>', unsafe_allow_html=True)
-st.markdown('<div class="sub-title">⚠️ Internet Connection is NOT Working ⚠️</div>', unsafe_allow_html=True)
+# ---------- TRANSLATIONS FOR MAIN CONTENT ----------
+if lang_tab == "🇺🇸 English":
+    title_text = "🚨 ALERT FOR DIGICEL HAITI"
+    subtitle_text = "⚠️ Internet Connection is NOT Working ⚠️"
+    warning_title = "⚠️ URGENT ALERT"
+    warning_text = """Digicel Haiti users in the Southern region are experiencing critical internet connectivity issues. Internet plans are not working, causing financial losses and inability to use social media. This issue has been ongoing for over 3 years."""
+    city_heading = "📍 Affected Cities in Southern Haiti"
+    footer_alert = "⚠️ This is a public alert for Digicel Haiti users. If you are experiencing internet issues, please contact Digicel customer support."
+    footer_copyright = f"© 2026 GlobalInternet.py | Alert System v3.0 | Built with ❤️ in Haiti"
 
-st.markdown("""
+elif lang_tab == "🇫🇷 Français":
+    title_text = "🚨 ALERTE POUR DIGICEL HAÏTI"
+    subtitle_text = "⚠️ La connexion Internet ne fonctionne PAS ⚠️"
+    warning_title = "⚠️ ALERTE URGENTE"
+    warning_text = """Les utilisateurs de Digicel Haïti dans la région Sud rencontrent de graves problèmes de connectivité Internet. Les forfaits Internet ne fonctionnent pas, ce qui entraîne des pertes financières et l'impossibilité d'utiliser les réseaux sociaux. Ce problème dure depuis plus de 3 ans."""
+    city_heading = "📍 Villes touchées dans le Sud d'Haïti"
+    footer_alert = "⚠️ Ceci est une alerte publique pour les utilisateurs de Digicel Haïti. Si vous rencontrez des problèmes Internet, veuillez contacter le service client de Digicel."
+    footer_copyright = f"© 2026 GlobalInternet.py | Système d'alerte v3.0 | Construit avec ❤️ en Haïti"
+
+else:  # Spanish
+    title_text = "🚨 ALERTA PARA DIGICEL HAITÍ"
+    subtitle_text = "⚠️ La conexión a Internet NO funciona ⚠️"
+    warning_title = "⚠️ ALERTA URGENTE"
+    warning_text = """Los usuarios de Digicel Haití en la región Sur están experimentando problemas críticos de conectividad a Internet. Los planes de Internet no funcionan, lo que provoca pérdidas financieras y la imposibilidad de usar redes sociales. Este problema ha persistido durante más de 3 años."""
+    city_heading = "📍 Ciudades afectadas en el Sur de Haití"
+    footer_alert = "⚠️ Esta es una alerta pública para los usuarios de Digicel Haití. Si está experimentando problemas de Internet, comuníquese con el servicio al cliente de Digicel."
+    footer_copyright = f"© 2026 GlobalInternet.py | Sistema de alerta v3.0 | Hecho con ❤️ en Haití"
+
+# ---------- Main Content ----------
+st.markdown(f'<div class="main-title">{title_text}</div>', unsafe_allow_html=True)
+st.markdown(f'<div class="sub-title">{subtitle_text}</div>', unsafe_allow_html=True)
+
+st.markdown(f"""
 <div class="warning-box">
-    <h3 style="color: #FF4444; margin: 0;">⚠️ URGENT ALERT</h3>
-    <p style="color: #DDDDDD; margin: 10px 0 0 0;">
-        Digicel Haiti users in the Southern region are experiencing critical internet connectivity issues.
-        Internet plans are not working, causing financial losses and inability to use social media.
-        This issue has been ongoing for over 3 years.
-    </p>
+    <h3 style="color: #FF4444; margin: 0;">{warning_title}</h3>
+    <p style="color: #DDDDDD; margin: 10px 0 0 0;">{warning_text}</p>
 </div>
 """, unsafe_allow_html=True)
 
-# ---------- City List ----------
-st.markdown('<h2 class="city-heading">📍 Affected Cities in Southern Haiti</h2>', unsafe_allow_html=True)
+st.markdown(f'<h2 class="city-heading">{city_heading}</h2>', unsafe_allow_html=True)
 
 southern_cities = [
     "Grand Goâve", "Jacmel", "Kenscoff", "Bainet", "Grand-Gosier",
@@ -325,14 +343,13 @@ st.markdown(f'<div class="total-cities">📊 Total affected cities: {len(souther
 
 # ---------- Footer ----------
 st.markdown("---")
-st.markdown("""
+st.markdown(f"""
 <div class="footer-text">
     <p>
-        <strong style="color: #FF4444;">⚠️ This is a public alert</strong> for Digicel Haiti users.<br>
-        If you are experiencing internet issues, please contact Digicel customer support.
+        <strong style="color: #FF4444;">{footer_alert}</strong>
     </p>
     <p class="small">
-        © 2026 GlobalInternet.py | Alert System v3.0 | Built with ❤️ in Haiti
+        {footer_copyright}
     </p>
 </div>
 """, unsafe_allow_html=True)
