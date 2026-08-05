@@ -194,28 +194,37 @@ with st.sidebar:
     # Display the alert text (without the extra invitation) in the sidebar
     st.markdown(f'<div class="voice-text">{displayed_text}</div>', unsafe_allow_html=True)
     
-    # ---------- Voice Alert: gTTS with autoplay ----------
+    # ---------- Voice Alert: gTTS with autoplay (stable version) ----------
     if st.button("🔊 Play Voice Alert (Female)", use_container_width=True):
         if GTTS_AVAILABLE:
-            with st.spinner("🔊 Generating voice with gTTS..."):
+            with st.spinner("🔊 Generating voice with gTTS... Please wait."):
                 try:
+                    # Generate speech
                     tts = gTTS(text=voice_text, lang=lang_code, slow=False)
                     audio_bytes = BytesIO()
                     tts.write_to_fp(audio_bytes)
                     audio_bytes.seek(0)
                     
+                    # Encode to base64
                     audio_base64 = base64.b64encode(audio_bytes.read()).decode()
+                    
+                    # Create HTML5 audio with autoplay, controls, and preload
+                    # This ensures the browser loads the entire file before playing.
                     audio_html = f"""
-                        <audio autoplay style="width: 100%;">
+                        <audio autoplay controls preload="auto" style="width: 100%; margin-top: 10px;">
                             <source src="data:audio/mp3;base64,{audio_base64}" type="audio/mp3">
                             Your browser does not support the audio element.
                         </audio>
+                        <p style="color: #aaaaaa; font-size: 0.8rem;">
+                            💡 If the audio doesn't play automatically, click the play button above.
+                        </p>
                     """
                     st.markdown(audio_html, unsafe_allow_html=True)
-                    st.success("✅ Female voice is playing (gTTS)!")
+                    st.success("✅ Audio loaded. It will play automatically or you can press play.")
                 except Exception as e:
                     st.error(f"❌ gTTS error: {e}")
                     st.info("💡 Falling back to browser speech synthesis...")
+                    # Fallback: browser TTS
                     escaped_text = voice_text.replace("`", "\\`").replace("'", "\\'")
                     js_code = f"""
                     <script>
@@ -244,6 +253,7 @@ with st.sidebar:
                     st.components.v1.html(js_code, height=0)
                     st.success("🔊 Voice playing via browser fallback!")
         else:
+            # gTTS not available – use browser TTS directly
             st.info("💡 gTTS not available. Using browser speech synthesis.")
             escaped_text = voice_text.replace("`", "\\`").replace("'", "\\'")
             js_code = f"""
