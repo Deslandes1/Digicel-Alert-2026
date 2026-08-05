@@ -1,11 +1,6 @@
 import streamlit as st
-from gtts import gTTS
-import base64
-from io import BytesIO
-import tempfile
-import os
 
-# ---------- 页面配置 ----------
+# ---------- Page Config ----------
 st.set_page_config(
     page_title="Alert for Digicel Haiti",
     page_icon="🚨",
@@ -13,7 +8,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# ---------- 自定义 CSS 样式 ----------
+# ---------- Custom CSS ----------
 st.markdown("""
     <style>
     .main-title {
@@ -74,28 +69,51 @@ st.markdown("""
     .stSidebar {
         background: #1a1a2e;
     }
+    .voice-text {
+        background: rgba(255, 0, 0, 0.08);
+        padding: 15px;
+        border-radius: 10px;
+        border-left: 4px solid #FF0000;
+        margin: 10px 0;
+        color: #DDDDDD;
+        font-size: 0.95rem;
+        line-height: 1.6;
+    }
+    .footer-text {
+        text-align: center;
+        padding: 20px 0;
+        color: #888;
+    }
+    .footer-text p {
+        font-size: 0.9rem;
+        color: #666;
+    }
+    .footer-text .small {
+        font-size: 0.8rem;
+        color: #555;
+    }
     </style>
 """, unsafe_allow_html=True)
 
-# ---------- 侧边栏 ----------
+# ---------- Sidebar ----------
 with st.sidebar:
     st.markdown('<div class="sidebar-title">🚨 AI Voice Alert</div>', unsafe_allow_html=True)
     
-    # 语言选择
+    # Language Selection
     lang_tab = st.radio(
         "Select Language / Choisissez la langue / Seleccione el idioma",
         ["🇺🇸 English", "🇫🇷 Français", "🇪🇸 Español"],
         index=0
     )
     
-    # 多语言文本
+    # Multilingual Alert Texts
     english_text = """This alert is for the Digicel telecommunication phone company. Users with Digicel SIM cards complain that when they do any internet plan on their phone, it never works and they lose money on their account making these plans. They cannot use WhatsApp, Facebook, or any social media. The Digicel company must fix this issue that has been going on for three years and a few months till 2026. Old Digicel users plan to change internet phone company if this issue persists. This message alert was brought to you by Gesner Deslandes, software engineer at GlobalInternet.py."""
     
     french_text = """Cette alerte concerne la compagnie de télécommunications Digicel. Les utilisateurs avec des cartes SIM Digicel se plaignent que lorsqu'ils font un forfait internet sur leur téléphone, cela ne fonctionne jamais et ils perdent de l'argent sur leur compte en faisant ces forfaits. Ils ne peuvent pas utiliser WhatsApp, Facebook ou aucun réseau social. La compagnie Digicel doit résoudre ce problème qui dure depuis trois ans et quelques mois jusqu'en 2026. Les anciens utilisateurs de Digicel prévoient de changer de compagnie de téléphone internet si ce problème persiste. Ce message d'alerte vous a été présenté par Gesner Deslandes, ingénieur logiciel chez GlobalInternet.py."""
     
     spanish_text = """Esta alerta es para la compañía de telecomunicaciones Digicel. Los usuarios con tarjetas SIM Digicel se quejan de que cuando contratan un plan de internet en su teléfono, nunca funciona y pierden dinero en su cuenta al hacer estos planes. No pueden usar WhatsApp, Facebook ni ninguna red social. La compañía Digicel debe solucionar este problema que ha estado ocurriendo durante tres años y algunos meses hasta 2026. Los usuarios antiguos de Digicel planean cambiar de compañía de teléfono internet si este problema persiste. Este mensaje de alerta fue presentado por Gesner Deslandes, ingeniero de software en GlobalInternet.py."""
     
-    # 根据选择的语言确定文本和语言代码
+    # Set text based on language
     if lang_tab == "🇺🇸 English":
         voice_text = english_text
         lang_code = 'en'
@@ -106,46 +124,44 @@ with st.sidebar:
         voice_text = spanish_text
         lang_code = 'es'
     
-    # 显示文本
-    st.markdown(f'<div style="background: rgba(255,0,0,0.08); padding: 15px; border-radius: 10px; border-left: 4px solid #FF0000; margin: 10px 0; color: #DDDDDD; font-size: 0.95rem; line-height: 1.6;">{voice_text}</div>', unsafe_allow_html=True)
+    # Display the voice text
+    st.markdown(f'<div class="voice-text">{voice_text}</div>', unsafe_allow_html=True)
     
-    # ---------- 语音合成 (gTTS) ----------
-    if st.button("🔊 Play Voice Alert", use_container_width=True):
-        with st.spinner("🔊 Generating voice alert..."):
-            try:
-                # 使用 gTTS 生成语音
-                tts = gTTS(text=voice_text, lang=lang_code, slow=False)
-                
-                # 将音频保存到临时文件
-                with tempfile.NamedTemporaryFile(delete=False, suffix=".mp3") as fp:
-                    tts.save(fp.name)
-                    audio_file = fp.name
-                
-                # 读取音频文件并转换为 base64
-                with open(audio_file, "rb") as f:
-                    audio_bytes = f.read()
-                    audio_base64 = base64.b64encode(audio_bytes).decode()
-                
-                # 清理临时文件
-                os.unlink(audio_file)
-                
-                # 使用 HTML5 音频播放器播放
-                audio_html = f"""
-                    <audio controls autoplay style="width: 100%; margin-top: 10px;">
-                        <source src="data:audio/mp3;base64,{audio_base64}" type="audio/mp3">
-                        Your browser does not support the audio element.
-                    </audio>
-                """
-                st.markdown(audio_html, unsafe_allow_html=True)
-                st.success("✅ Voice alert played successfully!")
-                
-            except Exception as e:
-                st.error(f"❌ Error generating voice: {str(e)}")
-                st.info("💡 Please make sure you have an internet connection for gTTS to work.")
+    # ---------- FALLBACK: Browser Speech Synthesis ----------
+    if st.button("🔊 Play Voice Alert (Browser)", use_container_width=True):
+        # Escape any backticks or quotes in the text to avoid breaking the JS string
+        escaped_text = voice_text.replace("`", "\\`").replace("'", "\\'")
+        
+        js_code = f"""
+        <script>
+        const msg = new SpeechSynthesisUtterance(`{escaped_text}`);
+        msg.lang = '{lang_code}';
+        msg.rate = 0.9;
+        msg.pitch = 1.1;
+        
+        // Wait for voices to load
+        function speakWithVoice() {{
+            const voices = speechSynthesis.getVoices();
+            const voice = voices.find(v => v.lang.startsWith('{lang_code}'));
+            if (voice) msg.voice = voice;
+            speechSynthesis.speak(msg);
+        }}
+        
+        // Check if voices are already loaded
+        if (speechSynthesis.getVoices().length > 0) {{
+            speakWithVoice();
+        }} else {{
+            speechSynthesis.onvoiceschanged = speakWithVoice;
+        }}
+        </script>
+        """
+        st.components.v1.html(js_code, height=0)
+        st.success("🔊 Voice is playing via your browser!")
+        st.info("💡 If you don't hear anything, please check your browser's volume settings.")
     
     st.markdown("---")
     
-    # ---------- 联系信息 ----------
+    # ---------- Contact Information ----------
     st.markdown('<div class="contact-info">', unsafe_allow_html=True)
     st.markdown("### 📱 Contact Information")
     st.markdown("**Gesner Deslandes**")
@@ -160,11 +176,11 @@ with st.sidebar:
     st.caption("🚨 Alert System v2.0")
     st.caption("Brought to you by GlobalInternet.py")
 
-# ---------- 主内容 ----------
+# ---------- Main Content ----------
 st.markdown('<div class="main-title">🚨 ALERT FOR DIGICEL HAITI</div>', unsafe_allow_html=True)
 st.markdown('<div class="sub-title">⚠️ Internet Connection is NOT Working ⚠️</div>', unsafe_allow_html=True)
 
-# 警告框
+# Warning Box
 st.markdown("""
 <div class="warning-box">
     <h3 style="color: #FF4444; margin: 0;">⚠️ URGENT ALERT</h3>
@@ -176,7 +192,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ---------- 城市列表 ----------
+# ---------- City List ----------
 st.markdown("### 📍 Affected Cities in Southern Haiti")
 
 southern_cities = [
@@ -194,7 +210,7 @@ southern_cities = [
     "Croix-des-Bouquets (South)", "Thomazeau (South)", "Cornillon (South)"
 ]
 
-# 以三列网格显示城市
+# Display cities in 3 columns
 cols = st.columns(3)
 for idx, city in enumerate(southern_cities):
     with cols[idx % 3]:
@@ -202,15 +218,15 @@ for idx, city in enumerate(southern_cities):
 
 st.caption(f"📊 Total affected cities: {len(southern_cities)}")
 
-# ---------- 页脚 ----------
+# ---------- Footer ----------
 st.markdown("---")
 st.markdown("""
-<div style="text-align: center; padding: 20px 0; color: #888;">
-    <p style="font-size: 0.9rem; color: #666;">
+<div class="footer-text">
+    <p>
         <strong style="color: #FF4444;">⚠️ This is a public alert</strong> for Digicel Haiti users.<br>
         If you are experiencing internet issues, please contact Digicel customer support.
     </p>
-    <p style="font-size: 0.8rem; color: #555;">
+    <p class="small">
         © 2026 GlobalInternet.py | Alert System v2.0 | Built with ❤️ in Haiti
     </p>
 </div>
