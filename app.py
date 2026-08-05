@@ -1,4 +1,7 @@
 import streamlit as st
+from gtts import gTTS
+from io import BytesIO
+import base64
 
 # ---------- Page Config ----------
 st.set_page_config(
@@ -63,12 +66,8 @@ st.markdown("""
         padding: 20px;
         margin: 20px 0;
     }
-    .stApp {
-        background: #0a0a0a;
-    }
-    .stSidebar {
-        background: #1a1a2e;
-    }
+    .stApp { background: #0a0a0a; }
+    .stSidebar { background: #1a1a2e; }
     .voice-text {
         background: rgba(255, 0, 0, 0.08);
         padding: 15px;
@@ -127,37 +126,46 @@ with st.sidebar:
     # Display the voice text
     st.markdown(f'<div class="voice-text">{voice_text}</div>', unsafe_allow_html=True)
     
-    # ---------- FALLBACK: Browser Speech Synthesis ----------
-    if st.button("🔊 Play Voice Alert (Browser)", use_container_width=True):
-        # Escape any backticks or quotes in the text to avoid breaking the JS string
-        escaped_text = voice_text.replace("`", "\\`").replace("'", "\\'")
-        
-        js_code = f"""
-        <script>
-        const msg = new SpeechSynthesisUtterance(`{escaped_text}`);
-        msg.lang = '{lang_code}';
-        msg.rate = 0.9;
-        msg.pitch = 1.1;
-        
-        // Wait for voices to load
-        function speakWithVoice() {{
-            const voices = speechSynthesis.getVoices();
-            const voice = voices.find(v => v.lang.startsWith('{lang_code}'));
-            if (voice) msg.voice = voice;
-            speechSynthesis.speak(msg);
-        }}
-        
-        // Check if voices are already loaded
-        if (speechSynthesis.getVoices().length > 0) {{
-            speakWithVoice();
-        }} else {{
-            speechSynthesis.onvoiceschanged = speakWithVoice;
-        }}
-        </script>
-        """
-        st.components.v1.html(js_code, height=0)
-        st.success("🔊 Voice is playing via your browser!")
-        st.info("💡 If you don't hear anything, please check your browser's volume settings.")
+    # ---------- Voice Generation with gTTS (Primary) ----------
+    if st.button("🔊 Play Voice Alert (gTTS)", use_container_width=True):
+        with st.spinner("🔊 Generating voice with gTTS..."):
+            try:
+                # Generate speech in memory using gTTS
+                tts = gTTS(text=voice_text, lang=lang_code, slow=False)
+                audio_bytes = BytesIO()
+                tts.write_to_fp(audio_bytes)
+                audio_bytes.seek(0)
+                
+                # Display audio player
+                st.audio(audio_bytes, format='audio/mp3')
+                st.success("✅ Voice played using gTTS!")
+            except Exception as e:
+                st.error(f"❌ gTTS error: {str(e)}")
+                st.info("💡 Trying browser speech synthesis as fallback...")
+                # ---------- Fallback: Browser Speech Synthesis ----------
+                escaped_text = voice_text.replace("`", "\\`").replace("'", "\\'")
+                js_code = f"""
+                <script>
+                const msg = new SpeechSynthesisUtterance(`{escaped_text}`);
+                msg.lang = '{lang_code}';
+                msg.rate = 0.9;
+                msg.pitch = 1.1;
+                function speakWithVoice() {{
+                    const voices = speechSynthesis.getVoices();
+                    const voice = voices.find(v => v.lang.startsWith('{lang_code}'));
+                    if (voice) msg.voice = voice;
+                    speechSynthesis.speak(msg);
+                }}
+                if (speechSynthesis.getVoices().length > 0) {{
+                    speakWithVoice();
+                }} else {{
+                    speechSynthesis.onvoiceschanged = speakWithVoice;
+                }}
+                </script>
+                """
+                st.components.v1.html(js_code, height=0)
+                st.success("🔊 Voice playing via browser fallback!")
+                st.info("💡 If you don't hear anything, check your browser's volume settings.")
     
     st.markdown("---")
     
