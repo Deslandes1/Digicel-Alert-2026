@@ -44,6 +44,8 @@ st.markdown("""
         margin: 5px 0;
         border-left: 4px solid #FF0000;
         transition: 0.3s;
+        color: #ffffff !important;   /* BRIGHT WHITE */
+        font-weight: 500;
     }
     .city-card:hover {
         background: rgba(255, 0, 0, 0.1);
@@ -62,12 +64,18 @@ st.markdown("""
         margin-top: 20px;
         border: 1px solid rgba(255, 0, 0, 0.3);
     }
+    .contact-info * {
+        color: #ffffff !important;   /* BRIGHT WHITE */
+    }
     .warning-box {
         background: rgba(255, 0, 0, 0.15);
         border: 2px solid #FF0000;
         border-radius: 10px;
         padding: 20px;
         margin: 20px 0;
+    }
+    .warning-box * {
+        color: #ffffff !important;   /* BRIGHT WHITE */
     }
     .stApp { background: #0a0a0a; }
     .stSidebar { background: #1a1a2e; }
@@ -77,7 +85,7 @@ st.markdown("""
         border-radius: 10px;
         border-left: 4px solid #FF0000;
         margin: 10px 0;
-        color: #DDDDDD;
+        color: #ffffff !important;   /* BRIGHT WHITE */
         font-size: 0.95rem;
         line-height: 1.6;
     }
@@ -88,11 +96,21 @@ st.markdown("""
     }
     .footer-text p {
         font-size: 0.9rem;
-        color: #666;
+        color: #ffffff !important;   /* BRIGHT WHITE */
     }
     .footer-text .small {
         font-size: 0.8rem;
-        color: #555;
+        color: #aaaaaa !important;   /* Slightly dimmer but still bright */
+    }
+    .city-heading {
+        color: #ffffff !important;
+        font-weight: 700;
+        margin-bottom: 20px;
+    }
+    .total-cities {
+        color: #ffffff !important;
+        font-weight: 600;
+        margin-top: 10px;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -127,21 +145,38 @@ with st.sidebar:
     
     st.markdown(f'<div class="voice-text">{voice_text}</div>', unsafe_allow_html=True)
     
-    # ---------- Voice Alert: Browser Speech Synthesis ----------
-    if st.button("🔊 Play Voice Alert", use_container_width=True):
+    # ---------- Female AI Voice Alert ----------
+    if st.button("🔊 Play Voice Alert (Female)", use_container_width=True):
         escaped_text = voice_text.replace("`", "\\`").replace("'", "\\'")
         js_code = f"""
         <script>
         const msg = new SpeechSynthesisUtterance(`{escaped_text}`);
         msg.lang = '{lang_code}';
         msg.rate = 0.9;
-        msg.pitch = 1.1;
+        msg.pitch = 1.1;   // Slightly higher pitch for a more feminine tone
+        
         function speakWithVoice() {{
             const voices = speechSynthesis.getVoices();
-            const voice = voices.find(v => v.lang.startsWith('{lang_code}'));
+            // Try to find a female voice for the selected language
+            let voice = null;
+            
+            // First, look for voices that contain 'female' in the name (case-insensitive)
+            for (let v of voices) {{
+                if (v.lang.startsWith('{lang_code}') && v.name.toLowerCase().includes('female')) {{
+                    voice = v;
+                    break;
+                }}
+            }}
+            // If no female voice found, pick the first voice that matches the language
+            if (!voice) {{
+                voice = voices.find(v => v.lang.startsWith('{lang_code}'));
+            }}
+            // If still none, use the default voice
             if (voice) msg.voice = voice;
+            
             speechSynthesis.speak(msg);
         }}
+        
         if (speechSynthesis.getVoices().length > 0) {{
             speakWithVoice();
         }} else {{
@@ -150,7 +185,7 @@ with st.sidebar:
         </script>
         """
         st.components.v1.html(js_code, height=0)
-        st.success("🔊 Voice is playing via your browser!")
+        st.success("🔊 Female voice is playing via your browser!")
         st.info("💡 If you don't hear anything, check your browser's volume and permissions.")
     
     st.markdown("---")
@@ -184,30 +219,33 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-st.markdown("### 📍 Affected Cities in Southern Haiti")
+# ---------- City List (EXACT 55 cities as per request) ----------
+st.markdown('<h2 class="city-heading">📍 Affected Cities in Southern Haiti</h2>', unsafe_allow_html=True)
 
 southern_cities = [
-    "Grand Goâve", "Petit-Goâve", "Léogâne", "Jacmel", "Cayes-Jacmel",
-    "Marigot", "Kenscoff", "Fonds-Verrettes", "Thiotte", "Bainet",
-    "Côte-de-Fer", "Belle-Anse", "Grand-Gosier", "Anse-à-Pitres", "Port-à-Piment",
-    "Les Cayes", "Camp-Perrin", "Torbeck", "Chantal", "Maniche",
-    "Aquin", "Cavaillon", "Saint-Louis-du-Sud", "Tiburon", "Roche-à-Bateaux",
-    "Côtes-de-Fer", "Baradères", "Petit-Trou-de-Nippes", "Anse-à-Veau", "Miragoâne",
-    "Fonds-des-Nègres", "Paillant", "Petit-Rivière-de-Nippes", "Arnaud",
-    "Cap-Haïtien (South Region)", "Gonaïves (South Region)", "Saint-Marc (South Region)",
-    "Les Anglais", "Dame-Marie", "Chambellan", "Moron", "Abricots",
-    "Bonbon", "Jérémie", "Roseaux", "Beaumont", "Pestel",
-    "Corail", "Trouin", "Miragoâne", "Fonds-Verrettes", "Ganthier",
-    "Croix-des-Bouquets (South)", "Thomazeau (South)", "Cornillon (South)"
+    "Grand Goâve", "Jacmel", "Kenscoff", "Bainet", "Grand-Gosier",
+    "Les Cayes", "Chantal", "Cavaillon", "Roche-à-Bateaux", "Petit-Trou-de-Nippes",
+    "Fonds-des-Nègres", "Arnaud", "Saint-Marc (South Region)", "Chambellan", "Bonbon",
+    "Beaumont", "Trouin", "Ganthier", "Cornillon (South)", "Petit-Goâve",
+    "Cayes-Jacmel", "Fonds-Verrettes", "Côte-de-Fer", "Anse-à-Pitres", "Camp-Perrin",
+    "Maniche", "Saint-Louis-du-Sud", "Côtes-de-Fer", "Anse-à-Veau", "Paillant",
+    "Cap-Haïtien (South Region)", "Les Anglais", "Moron", "Jérémie", "Pestel",
+    "Miragoâne", "Croix-des-Bouquets (South)", "Léogâne", "Marigot", "Thiotte",
+    "Belle-Anse", "Port-à-Piment", "Torbeck", "Aquin", "Tiburon",
+    "Baradères", "Miragoâne", "Petit-Rivière-de-Nippes", "Gonaïves (South Region)",
+    "Dame-Marie", "Abricots", "Roseaux", "Corail", "Fonds-Verrettes",
+    "Thomazeau (South)"
 ]
 
+# Display in 3 columns with white text
 cols = st.columns(3)
 for idx, city in enumerate(southern_cities):
     with cols[idx % 3]:
         st.markdown(f'<div class="city-card">📍 {city}</div>', unsafe_allow_html=True)
 
-st.caption(f"📊 Total affected cities: {len(southern_cities)}")
+st.markdown(f'<div class="total-cities">📊 Total affected cities: {len(southern_cities)}</div>', unsafe_allow_html=True)
 
+# ---------- Footer ----------
 st.markdown("---")
 st.markdown("""
 <div class="footer-text">
@@ -221,5 +259,6 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
+# ---------- Final Debug ----------
 print("✅ app.py loaded completely and rendered successfully.")
 st.success("✅ App ready!")
