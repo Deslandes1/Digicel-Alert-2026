@@ -2,7 +2,6 @@ import streamlit as st
 from io import BytesIO
 import base64
 
-# Try importing gTTS
 try:
     from gtts import gTTS
     GTTS_AVAILABLE = True
@@ -191,10 +190,9 @@ with st.sidebar:
         voice_text = spanish_voice
         lang_code = 'es'
     
-    # Display the alert text (without the extra invitation) in the sidebar
     st.markdown(f'<div class="voice-text">{displayed_text}</div>', unsafe_allow_html=True)
     
-    # ---------- Voice Alert: gTTS with autoplay (stable version) ----------
+    # ---------- Voice Alert: gTTS with robust HTML5 audio ----------
     if st.button("🔊 Play Voice Alert (Female)", use_container_width=True):
         if GTTS_AVAILABLE:
             with st.spinner("🔊 Generating voice with gTTS... Please wait."):
@@ -208,19 +206,27 @@ with st.sidebar:
                     # Encode to base64
                     audio_base64 = base64.b64encode(audio_bytes.read()).decode()
                     
-                    # Create HTML5 audio with autoplay, controls, and preload
-                    # This ensures the browser loads the entire file before playing.
+                    # Create a robust HTML5 audio player with preload, autoplay, and fallback
                     audio_html = f"""
-                        <audio autoplay controls preload="auto" style="width: 100%; margin-top: 10px;">
+                    <div style="margin: 10px 0;">
+                        <audio id="myAudio" controls preload="auto" style="width: 100%;">
                             <source src="data:audio/mp3;base64,{audio_base64}" type="audio/mp3">
                             Your browser does not support the audio element.
                         </audio>
                         <p style="color: #aaaaaa; font-size: 0.8rem;">
                             💡 If the audio doesn't play automatically, click the play button above.
                         </p>
+                        <script>
+                            var audio = document.getElementById('myAudio');
+                            audio.addEventListener('canplaythrough', function() {{
+                                audio.play();
+                            }});
+                            // If autoplay is blocked, user can still press play.
+                        </script>
+                    </div>
                     """
                     st.markdown(audio_html, unsafe_allow_html=True)
-                    st.success("✅ Audio loaded. It will play automatically or you can press play.")
+                    st.success("✅ Audio loaded. It will play once fully loaded.")
                 except Exception as e:
                     st.error(f"❌ gTTS error: {e}")
                     st.info("💡 Falling back to browser speech synthesis...")
